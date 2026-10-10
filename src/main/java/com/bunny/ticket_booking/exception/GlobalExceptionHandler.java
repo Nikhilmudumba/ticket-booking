@@ -1,5 +1,6 @@
 package com.bunny.ticket_booking.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,11 @@ public class GlobalExceptionHandler {
         b.put("status", status);
         b.put("error", message);
         return b;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleIntegrity() {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(body(409, "Request conflicts with existing data"));
     }
 }
