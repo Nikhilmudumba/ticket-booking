@@ -49,6 +49,7 @@ class ConcurrentBookingTest {
             User user = new User();
             user.setName("user" + i);
             user.setEmail("user" + i + "-" + tag + "@test.com");
+            user.setPasswordHash("test");
             userIds.add(userRepository.save(user).getId());
         }
 
