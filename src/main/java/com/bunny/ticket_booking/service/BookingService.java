@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -68,10 +69,15 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponse cancel(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
+    public BookingResponse cancel(Long bookingId, Long userId) {
+        Booking booking = bookingRepository.findByIdForUpdate(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Booking not found: " + bookingId));
+
+        if (!booking.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only cancel your own bookings");
+        }
 
         if (booking.getStatus() == BookingStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Booking already cancelled");
@@ -81,6 +87,13 @@ public class BookingService {
         Seat seat = findSeat(booking.getSeat().getId());
         seat.setStatus(SeatStatus.AVAILABLE);
         return toResponse(booking);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> myBookings(Long userId) {
+        return bookingRepository.findByUserIdOrderByIdDesc(userId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private Seat findSeat(Long id) {
